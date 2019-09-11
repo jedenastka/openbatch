@@ -15,24 +15,31 @@ class Environment {
     private:
         std::map<std::string, std::string> execution;
         std::map<std::string, std::string> variables;
+        EnvironmentBank getBankPointer(EnvironmentBank bank, std::map<std::string, std::string> *p_bank);
 };
 
-std::string Environment::get(EnvironmentBank bank, std::string key) {
-    std::map<std::string, std::string> *p_chosenBank;
+EnvironmentBank Environment::getBankPointer(EnvironmentBank bank, std::map<std::string, std::string> *p_bank) {
     switch (bank) {
         case EnvironmentBank::EXECUTION:
-            p_chosenBank = &execution;
+            p_bank = &execution;
             break;
         case EnvironmentBank::VARIABLES:
-            p_chosenBank = &variables;
+            p_bank = &variables;
         default:
             throw;
     }
+}
+
+std::string Environment::get(EnvironmentBank bank, std::string key) {
+    std::map<std::string, std::string> *p_chosenBank;
+    getBankPointer(bank, p_chosenBank);
     return p_chosenBank->operator[](key);
 }
 
 void Environment::set(EnvironmentBank bank, std::string key, std::string value) {
-
+    std::map<std::string, std::string> *p_chosenBank;
+    getBankPointer(bank, p_chosenBank);
+    p_chosenBank->operator[](key) = value;
 }
 
 std::vector<std::string> split(std::string string, char splitChar) {
