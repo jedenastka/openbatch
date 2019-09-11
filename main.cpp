@@ -1,8 +1,39 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 
-class Enviroment {};
+enum class EnvironmentBank {
+    EXECUTION,
+    VARIABLES
+};
+
+class Environment {
+    public:
+        std::string get(EnvironmentBank bank, std::string key);
+        void set(EnvironmentBank bank, std::string key, std::string value);
+    private:
+        std::map<std::string, std::string> execution;
+        std::map<std::string, std::string> variables;
+};
+
+std::string Environment::get(EnvironmentBank bank, std::string key) {
+    std::map<std::string, std::string> *p_chosenBank;
+    switch (bank) {
+        case EnvironmentBank::EXECUTION:
+            p_chosenBank = &execution;
+            break;
+        case EnvironmentBank::VARIABLES:
+            p_chosenBank = &variables;
+        default:
+            throw;
+    }
+    return p_chosenBank->operator[](key);
+}
+
+void Environment::set(EnvironmentBank bank, std::string key, std::string value) {
+
+}
 
 std::vector<std::string> split(std::string string, char splitChar) {
     std::vector<std::string> splitedString;
@@ -27,7 +58,7 @@ void printVector(Vector vector, std::string comma = " ", std::string end = "\n")
     if (size > 1) {
         for (int i = 0; i < size; i++) {
             std::cout << vector[i];
-            if (i < size -1) {
+            if (i < size - 1) {
                 std::cout << comma;
             }
         }
