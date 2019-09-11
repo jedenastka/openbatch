@@ -83,15 +83,20 @@ void execute(std::string command, std::vector<std::string> args) {
         std::string key = command;
         key.erase(key.begin());
         environment.set(EnvironmentBank::EXECUTION, key, args[0]);
-    } else {
-        if (command == "echo") {
-            printVector(args);
-        }
+        return;
     }
     if (environment.get(EnvironmentBank::EXECUTION, "echo") == "on") {
         std::cout << command << ' ';
         printVector(args, " ", "");
         std::cout << '\n';
+    }
+    if (command == "echo") {
+        printVector(args);
+    } else if (command == "rem") {} else if (command == "somecommand") {
+        // ...
+    } else {
+        std::cout << "Bad command!\n";
+        throw;
     }
 }
 
