@@ -100,8 +100,10 @@ void execute(std::string command, std::vector<std::string> args) {
     }
 }
 
-int main() {
-    //environment.set(EnvironmentBank::EXECUTION, "echo", "off");
+int main(int argc, char *argv[]) {
+    if (std::string_view(argv[1]) == "-i") {
+        environment.set(EnvironmentBank::EXECUTION, "echo", "off");
+    }
     while (!std::cin.eof()) {
         std::string line;
         getline(std::cin, line, '\n');
