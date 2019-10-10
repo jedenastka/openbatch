@@ -82,7 +82,7 @@ void printVector(Vector vector, std::string comma = " ", std::string end = "\n")
 void execute(std::string command, std::vector<std::string> args) {
     std::string line = command;
     for (auto arg: args) {
-        line += arg + " ";
+        line += " " + arg;
     }
     environment.code.push_back(line);
     if (command[0] == '@') {
