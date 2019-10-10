@@ -13,7 +13,6 @@ class Environment {
         Environment();
         std::string get(EnvironmentBank bank, std::string key);
         void set(EnvironmentBank bank, std::string key, std::string value);
-        std::vector<std::string> code;
     private:
         std::map<std::string, std::string> execution;
         std::map<std::string, std::string> variables;
@@ -80,11 +79,6 @@ void printVector(Vector vector, std::string comma = " ", std::string end = "\n")
 }
 
 void execute(std::string command, std::vector<std::string> args) {
-    std::string line = command;
-    for (auto arg: args) {
-        line += arg + " ";
-    }
-    environment.code.push_back(line);
     if (command[0] == '@') {
         std::string key = command;
         key.erase(key.begin());
@@ -92,7 +86,9 @@ void execute(std::string command, std::vector<std::string> args) {
         return;
     }
     if (environment.get(EnvironmentBank::EXECUTION, "echo") == "on") {
-        std::cout << line << '\n';
+        std::cout << command << ' ';
+        printVector(args, " ", "");
+        std::cout << '\n';
     }
     if (command == "echo") {
         printVector(args);
@@ -100,7 +96,7 @@ void execute(std::string command, std::vector<std::string> args) {
         // ...
     } else {
         std::cout << "Bad command!\n";
-        //throw;
+        throw;
     }
 }
 
