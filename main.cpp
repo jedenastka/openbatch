@@ -109,15 +109,16 @@ std::vector<Switch> parseSwitches(std::vector<std::string> args) {
             Switch switch_;
             std::string switchType = arg;
             switchType.erase(0, 1);
-            switch_.type = switchType;
             for (int j = 2; j < arg.length(); j++) {
                 if (arg[j] == ':') {
                     std::string switchParam = arg;
-                    switchParam.erase(j+1);
+                    switchParam.erase(0, j+1);
+                    switchType.erase(j-1, switchParam.back());
                     switch_.param = switchParam;
                     break;
                 }
             }
+            switch_.type = switchType;
             switches.push_back(switch_);
         }
     }
