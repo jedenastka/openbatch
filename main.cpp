@@ -6,7 +6,6 @@
 
 // Globals
 bool globalEcho;
-bool loopEnd;
 std::map<std::string, std::string> variables;
 std::vector<std::string> code;
 std::map<std::string, int> gotoSections;
@@ -98,10 +97,6 @@ void set(std::vector<std::string> switches, std::string setString) {
     // ...
 }
 
-void exit() {
-    loopEnd = 1;
-}
-
 }
 
 std::vector<Switch> parseSwitches(std::vector<std::string> args) {
@@ -165,7 +160,7 @@ void parse(std::string line, bool &echo, CommandType &commandType, std::string &
     }
 }
 
-void execute(std::string line) {
+int execute(std::string line) {
     bool echo;
     CommandType commandType;
     std::string command;
@@ -184,31 +179,36 @@ void execute(std::string line) {
         } else if (command == "GOTO") {
             builtins::goto_(args[0]);
         } else if (command == "EXIT") {
-            builtins::exit();
+            return 0;
         } else {
             std::cout << command << "is not recognized as an internal or external command.\n";
         }
     } else if (commandType == GOTO_SECTION) {
         gotoSections.insert(std::pair<std::string, int>(command, lineNumber));
     }
+    return 1;
 }
 
 int main(int argc, char *argv[]) {
     globalEcho = 1;
     bool bufferedMode = 0;
-    while (!std::cin.eof() && !loopEnd) {
+    while (!std::cin.eof()) {
         std::string line;
         getline(std::cin, line, '\n');
         if (bufferedMode) {
             code.push_back(line);
         } else {
-            execute(line);
+            if (!execute(line)) {
+                return 0;
+            }
         }
     }
     if (bufferedMode) {
         lineNumber = 0;
-        while (lineNumber < code.size() && !loopEnd) {
-            execute(code[lineNumber]);
+        while (lineNumber < code.size()) {
+            if (!execute(code[lineNumber])) {
+                return 0;
+            }
             lineNumber++;
         }
     }
