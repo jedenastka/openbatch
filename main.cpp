@@ -6,6 +6,7 @@
 
 // Globals
 bool globalEcho;
+bool loopEnd;
 std::map<std::string, std::string> variables;
 std::vector<std::string> code;
 std::map<std::string, int> gotoSections;
@@ -97,6 +98,10 @@ void set(std::vector<std::string> switches, std::string setString) {
     // ...
 }
 
+void exit() {
+    loopEnd = 1;
+}
+
 }
 
 std::vector<Switch> parseSwitches(std::vector<std::string> args) {
@@ -178,6 +183,8 @@ void execute(std::string line) {
             builtins::rem();
         } else if (command == "GOTO") {
             builtins::goto_(args[0]);
+        } else if (command == "EXIT") {
+            builtins::exit();
         } else {
             std::cout << command << "is not recognized as an internal or external command.\n";
         }
@@ -188,8 +195,8 @@ void execute(std::string line) {
 
 int main(int argc, char *argv[]) {
     globalEcho = 1;
-    bool bufferedMode = 1;
-    while (!std::cin.eof()) {
+    bool bufferedMode = 0;
+    while (!std::cin.eof() && !loopEnd) {
         std::string line;
         getline(std::cin, line, '\n');
         if (bufferedMode) {
@@ -200,7 +207,7 @@ int main(int argc, char *argv[]) {
     }
     if (bufferedMode) {
         lineNumber = 0;
-        while (lineNumber < code.size()) {
+        while (lineNumber < code.size() && !loopEnd) {
             execute(code[lineNumber]);
             lineNumber++;
         }
