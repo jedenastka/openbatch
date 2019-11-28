@@ -2,51 +2,29 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
+#include <utility>
 
-enum class EnvironmentBank {
-    EXECUTION,
-    VARIABLES
+// Globals
+bool globalEcho;
+std::map<std::string, std::string> variables;
+std::vector<std::string> code;
+std::map<std::string, int> gotoSections;
+int lineNumber = 0;
+
+// Enums
+enum CommandType {
+    COMMAND,
+    GOTO_SECTION
 };
 
-class Environment {
-    public:
-        Environment();
-        std::string get(EnvironmentBank bank, std::string key);
-        void set(EnvironmentBank bank, std::string key, std::string value);
-        std::vector<std::string> code;
-    private:
-        std::map<std::string, std::string> execution;
-        std::map<std::string, std::string> variables;
-        std::map<std::string, std::string> *getBankPointer(EnvironmentBank bank);
-};
-
-Environment::Environment() {
-    execution["echo"] = "on";
-}
-
-std::map<std::string, std::string> *Environment::getBankPointer(EnvironmentBank bank) {
-    switch (bank) {
-        case EnvironmentBank::EXECUTION:
-            return &execution;
-            break;
-        case EnvironmentBank::VARIABLES:
-            return &variables;
-        default:
-            throw;
+std::string upper(std::string source) {
+    std::string result;
+    for (int i = 0; i < source.length(); i++) {
+        result += toupper(source[i]);
     }
+    return result;
 }
-
-std::string Environment::get(EnvironmentBank bank, std::string key) {
-    std::map<std::string, std::string> *p_chosenBank = getBankPointer(bank);
-    return (*p_chosenBank)[key];
-}
-
-void Environment::set(EnvironmentBank bank, std::string key, std::string value) {
-    std::map<std::string, std::string> *p_chosenBank = getBankPointer(bank);
-    (*p_chosenBank)[key] = value;
-}
-
-Environment environment;
 
 std::vector<std::string> split(std::string string, char splitChar) {
     std::vector<std::string> splitedString;
@@ -66,56 +44,131 @@ std::vector<std::string> split(std::string string, char splitChar) {
 }
 
 template <typename Vector>
-void printVector(Vector vector, std::string comma = " ", std::string end = "\n") {
+std::string joinVector(Vector vector, std::string comma = " ", std::string end = "\n") {
     int size = vector.size();
+    std::string str;
     if (!vector.empty()) {
         for (int i = 0; i < size; i++) {
-            std::cout << vector[i];
+            str += vector[i];
             if (i < size - 1) {
-                std::cout << comma;
+                str += comma;
             }
         }
-        std::cout << end;
+        str += end;
+    }
+    return str;
+}
+
+void output(std::string str) {
+    std::cout << str << '\n';
+}
+
+namespace builtins {
+
+void echo(std::string str) {
+    if (upper(str) == "ON") {
+        globalEcho = 1;
+    } else if (upper(str) == "OFF") {
+        globalEcho = 0;
+    } else {
+        output(str);
     }
 }
 
-void execute(std::string command, std::vector<std::string> args) {
-    std::string line = command;
-    for (auto arg: args) {
-        line += " " + arg;
+void rem() {
+    // Do nothing
+}
+
+void goto_(std::string gotoSection) {
+    /*for (auto i: gotoSections) {
+        std::cout << std::get<0>(i) << ' ' << std::get<1>(i) << '\n';
+    }*/
+    lineNumber = gotoSections[gotoSection];
+}
+
+}
+
+void parse(std::string line, bool &echo, CommandType &commandType, std::string &command, std::vector<std::string> &args) {
+    // Variables
+    echo = globalEcho;
+    //command;
+    commandType = COMMAND;
+    //args;
+    // Ignore empty lines
+    if (!line.empty()) {
+        // Parsing
+        // First character checks (goto sections and no echo)
+        char firstChar = line[0];
+        std::string noFirstChar = line;
+        noFirstChar.erase(noFirstChar.begin());
+        bool isSpecial = 0;
+        if (firstChar == '@') {
+            echo = 0;
+            isSpecial = 1;
+        } else if (firstChar == ':') {
+            commandType = GOTO_SECTION;
+            isSpecial = 1;
+        }
+        if (isSpecial) {
+            line = noFirstChar;
+        }
+        // Split command and args
+        if (commandType == COMMAND) {
+            args = split(line, ' ');
+            if (!args.empty()) {
+                command = args[0];
+                args.erase(args.begin());
+            }
+            command = upper(command);
+        } else {
+            command = line;
+        }
     }
-    environment.code.push_back(line);
-    if (command[0] == '@') {
-        std::string key = command;
-        key.erase(key.begin());
-        environment.set(EnvironmentBank::EXECUTION, key, args[0]);
-        return;
-    }
-    if (environment.get(EnvironmentBank::EXECUTION, "echo") == "on") {
+}
+
+void execute(std::string line) {
+    bool echo;
+    CommandType commandType;
+    std::string command;
+    std::vector<std::string> args;
+    parse(line, echo, commandType, command, args);
+    if (echo) {
         std::cout << line << '\n';
     }
-    if (command == "echo") {
-        printVector(args);
-    } else if (command == "rem") {} else if (command == "somecommand") {
-        // ...
-    } else {
-        std::cout << "Bad command!\n";
-        //throw;
+    if (commandType == COMMAND) {
+        if (command.empty()) {
+            builtins::rem();
+        } else if (command == "ECHO") {
+            builtins::echo(joinVector(args, " ",  ""));
+        } else if (command == "REM") {
+            builtins::rem();
+        } else if (command == "GOTO") {
+            builtins::goto_(args[0]);
+        } else {
+            std::cout << command << "is not recognized as an internal or external command.\n";
+        }
+    } else if (commandType == GOTO_SECTION) {
+        gotoSections.insert(std::pair<std::string, int>(command, lineNumber));
     }
 }
 
 int main(int argc, char *argv[]) {
-    if (std::string_view(argv[1]) == "-i") {
-        environment.set(EnvironmentBank::EXECUTION, "echo", "off");
-    }
+    globalEcho = 1;
+    bool bufferedMode = 1;
     while (!std::cin.eof()) {
         std::string line;
         getline(std::cin, line, '\n');
-        std::vector<std::string> args = split(line, ' ');
-        if (!args.empty()) {
-            std::string command = args[0];
-            args.erase(args.begin());
-            execute(command, args);
+        if (bufferedMode) {
+            code.push_back(line);
+        } else {
+            execute(line);
+        }
+    }
+    if (bufferedMode) {
+        lineNumber = 0;
+        while (lineNumber < code.size()) {
+            execute(code[lineNumber]);
+            lineNumber++;
         }
     }
 }
