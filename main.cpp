@@ -17,6 +17,14 @@ enum CommandType {
     GOTO_SECTION
 };
 
+// Structs
+
+struct Switch {
+    std::string type;
+    std::string param;
+};
+
+
 std::string upper(std::string source) {
     std::string result;
     for (int i = 0; i < source.length(); i++) {
@@ -85,6 +93,33 @@ void goto_(std::string gotoSection) {
     lineNumber = gotoSections[gotoSection];
 }
 
+void set(std::vector<std::string> switches, std::string setString) {
+    // ...
+}
+
+}
+
+std::vector<Switch> parseSwitches(std::vector<std::string> args) {
+    std::vector<Switch> switches;
+    for (int i = 0; i < args.size(); i++) {
+        std::string arg = args[i];
+        if (arg[0] == '/') {
+            Switch switch_;
+            std::string switchType = arg;
+            switchType.erase(1);
+            switch_.type = switchType;
+            for (int j = 2; j < arg.length(); j++) {
+                if (arg[j] == ':') {
+                    std::string switchParam = arg;
+                    switchParam.erase(j+1);
+                    switch_.param = switchParam;
+                    break;
+                }
+            }
+            switches.push_back(switch_);
+        }
+    }
+    return switches;
 }
 
 void parse(std::string line, bool &echo, CommandType &commandType, std::string &command, std::vector<std::string> &args) {
@@ -99,7 +134,7 @@ void parse(std::string line, bool &echo, CommandType &commandType, std::string &
         // First character checks (goto sections and no echo)
         char firstChar = line[0];
         std::string noFirstChar = line;
-        noFirstChar.erase(noFirstChar.begin());
+        noFirstChar.erase(1);
         bool isSpecial = 0;
         if (firstChar == '@') {
             echo = 0;
