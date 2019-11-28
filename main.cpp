@@ -93,8 +93,10 @@ void goto_(std::string gotoSection) {
     lineNumber = gotoSections[gotoSection];
 }
 
-void set(std::vector<std::string> switches, std::string setString) {
-    // ...
+void set(std::vector<Switch> switches/*, std::string setString*/) {
+    for (auto i: switches) {
+        std::cout << i.type << ' ' << i.param << '\n';
+    }
 }
 
 }
@@ -106,7 +108,7 @@ std::vector<Switch> parseSwitches(std::vector<std::string> args) {
         if (arg[0] == '/') {
             Switch switch_;
             std::string switchType = arg;
-            switchType.erase(1);
+            switchType.erase(0, 1);
             switch_.type = switchType;
             for (int j = 2; j < arg.length(); j++) {
                 if (arg[j] == ':') {
@@ -134,7 +136,7 @@ void parse(std::string line, bool &echo, CommandType &commandType, std::string &
         // First character checks (goto sections and no echo)
         char firstChar = line[0];
         std::string noFirstChar = line;
-        noFirstChar.erase(1);
+        noFirstChar.erase(0, 1);
         bool isSpecial = 0;
         if (firstChar == '@') {
             echo = 0;
@@ -180,6 +182,8 @@ int execute(std::string line) {
             builtins::goto_(args[0]);
         } else if (command == "EXIT") {
             return 0;
+        } else if (command == "SET") {
+            builtins::set(parseSwitches(args));
         } else {
             std::cout << command << "is not recognized as an internal or external command.\n";
         }
